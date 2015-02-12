@@ -1,0 +1,85 @@
+---
+title: "ggplot2 scale_y_log10 notes"
+author: "PMG"
+date: "2/10/2015"
+output: html_document
+---
+
+
+http://thread.gmane.org/gmane.comp.lang.r.ggplot2/10433
+
+```
+From: Dennis Murphy <djmuser@...>
+Subject: Re: log 10 scale, but tick labels in decimals
+Newsgroups: gmane.comp.lang.r.ggplot2
+Date: 2015-02-05 02:26:05 GMT (6 days, 22 hours and 14 minutes ago)
+Hi:
+
+Is this what you had in mind?
+
+set.seed(253089)
+DF <- data.frame(x = 1:20, y = runif(20, 0.0001, 10))
+
+library(ggplot2)
+ggplot(DF, aes(x = x, y = y)) +
+   geom_point() +
+   scale_y_log10(limits = c(0.000, 10), breaks = c(0.01, 0.1, 0.5, 1, 5, 10))
+
+Dennis
+
+On Wed, Feb 4, 2015 at 3:02 PM, JR Flanders <jrflanders@...> wrote:
+> I'm struggling with how to show tick labels as decimals (0.01, 0.1, 1...)
+> rather than integers to the base 10 (-2, -1, 0...). Can any of the scales
+> arguments handle this?
+```
+
+Trying this code I realize that if you have a "0" on limits or breaks it FAILS
+
+
+```{r}
+set.seed(253089)
+DF <- data.frame(x = 1:20, y = runif(20, 0.0001, 10))
+
+library(ggplot2)
+p <- ggplot(DF, aes(x = x, y = y)) +
+            geom_point() 
+
+p
+
+p+scale_y_log10()
+
+p+scale_y_log10(  breaks = c(0.01, 0.1, 0.5, 1, 5, 10))
+
+```
+
+
+
+Seems that if the '0' is contained in the limits or the breacks this valuse is evaluated and log FAILS.
+```{r}
+
+# if the 0 is one of the limits it fails !!
+p+scale_y_log10(  breaks = c(0.01, 0.1, 0.5, 1, 5, 10), limits = c(0, 10))
+p+scale_y_log10(  breaks = c(0.01, 0.1, 0.5, 1, 5, 10), limits = c(0.00000, 10))
+
+# if the 0 is in the breacks it fails !!
+#p+scale_y_log10(  breaks = c(-1,0, 10), limits = c(0.0000001, 10))
+# Error in seq.default(dots[[1L]][[1L]], dots[[2L]][[1L]], length = dots[[3L]][[1L]]) : 
+#   'from' cannot be NA, NaN or infinite
+# In addition: Warning message:
+# In scale$trans$trans(breaks) : NaNs produced
+
+#p+coord_trans( y = "log10", limits = c(0.000, 10), breaks = c(0.01, 0.1, 0.5, 1, 5, 10))
+# Error in coord_trans(y = "log10", limits = c(0, 10), breaks = c(0.01,  : 
+#   unused arguments (limits = c(0, 10), breaks = c(0.01, 0.1, 0.5, 1, 5, 10))
+  
+# the limits 
+p+scale_y_log10(  breaks = c(0.01, 0.1, 0.5, 1, 5, 10), limits = c(0.001, 10))
+
+# the y range contain the 0 but not any of the limits itself => OK
+p+scale_y_log10(  breaks = c(-0.5,1,10), limits = c(-1, 10))
+
+
+sessionInfo()
+
+
+```
